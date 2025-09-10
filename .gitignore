@@ -1,7 +1,64 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.pyc
-*~
-__pycache__
+*.pyd
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Distribution / packaging
+.Python
+build/
+dist/
+eggs/
+*.egg
+
+# Environments
+.env
 .venv
-db.sqlite3
-.DS_Store
-media
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Editor-specific files
+.vscode/        # Visual Studio Code
+.idea/          # IntelliJ IDEA / PyCharm
+*.swp           # Vim swap files
+*~              # Emacs backup files
+.DS_Store       # macOS specific files
+
+# Logs and databases
+*.log
+*.sqlite3
+instance/       # Flask instance folder
+db.sqlite3      # Common Django database file
+
+# Documentation
+docs/_build/
+
+# Jupyter Notebook specific files
+.ipynb_checkpoints/
+
+# Test and coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Other temporary files
+*.tmp
+*.bak

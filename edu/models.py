@@ -1,7 +1,7 @@
 import os
 from django.db import models
 
-# settings.AUTH_USER_MODEL      -   better practise
+
 def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
     ext = filename.split('.')[-1]
