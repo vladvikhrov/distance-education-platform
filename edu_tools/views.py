@@ -14,14 +14,21 @@ def add_schoolers(request):
             df = pd.read_excel(excel_file)
             role = request.POST.get('Role')
             
+            
             for index, row in df.iterrows():
                 username = row.get('Логин')
                 name = row.get('Имя')
                 surname = row.get('Фамилия')
                 password = row.get('Пароль')
                 patronymic = row.get('Отчество')
+
                 if not isinstance(patronymic, str):
                     patronymic = ''
+
+                if None in [username, name, surname, password, patronymic]:
+                    messages.error(request, 'Файл имеет не верный формат.')
+                    return redirect('add_schoolers')
+                
                 if username and password and name and surname:
                     User.objects.create_user(login=username, password=password, first_name=name, last_name=surname, patronymic=patronymic, role=role)
             
@@ -29,7 +36,7 @@ def add_schoolers(request):
             
         return render(request, "tools/add_schoolers.html")  
     else:
-        return HttpResponseForbidden()
+        return HttpResponseForbidden() # нет доступа
 
 # Добавление уроков
 def edu_program(request):

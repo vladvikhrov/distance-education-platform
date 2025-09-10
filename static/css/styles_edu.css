@@ -13,4 +13,9 @@ body {
   font-family: "Roboto", sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
+
+}
+.toast {
+    min-width: 200px;
+    font-size: 0.9rem;
 }
