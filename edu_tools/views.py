@@ -6,7 +6,7 @@ from users.models import User
 from .forms import LessonsForm
 from django.contrib import messages
 
-
+# код для добавление учеников или учителей
 def add_schoolers(request):
     if request.user.role == 'A':
         if request.method == 'POST':
@@ -29,7 +29,7 @@ def add_schoolers(request):
                     messages.error(request, 'Файл имеет не верный формат.')
                     return redirect('add_schoolers')
                 
-                if username and password and name and surname:
+                if username and password and name and surname:  
                     User.objects.create_user(login=username, password=password, first_name=name, last_name=surname, patronymic=patronymic, role=role)
             
             return redirect('home')

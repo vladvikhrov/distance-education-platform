@@ -23,9 +23,6 @@ class Lessons(models.Model):
         ordering = ["-data"]
         
     def __str__(self):
-        """
-        String for representing the MyModelName object (in Admin site etc.)
-        """
         return self.topic
     
     # def save(self, *args, **kwargs):
@@ -42,16 +39,13 @@ class Subjects(models.Model):
         verbose_name_plural = 'Предметы'
         
     def __str__(self):
-        """
-        String for representing the MyModelName object (in Admin site etc.)
-        """
         return self.name
     
     
 class Classes(models.Model):
     number = models.CharField(max_length=2, verbose_name='Номер класса')
     letter = models.CharField(max_length=1, verbose_name='Параллель')
-    sub_id = models.ManyToManyField(Subjects, verbose_name='Предметы')
+    sub_id = models.ManyToManyField(Subjects, verbose_name='Предметы', blank=True)
     
     class Meta:
         verbose_name = 'Класс'
@@ -62,7 +56,4 @@ class Classes(models.Model):
         return self.number + self.letter
         
     def __str__(self):
-        """
-        String for representing the MyModelName object (in Admin site etc.)
-        """
         return self.number + self.letter
