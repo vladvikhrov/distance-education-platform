@@ -34,6 +34,10 @@ venv.bak/
 *.sqlite3
 instance/       # Flask instance folder
 db.sqlite3      # Common Django database file
+/media/
+/media
+media/
+media/*
 
 # Documentation
 docs/_build/
