@@ -11,8 +11,14 @@ from .forms import LessonsForm
 @role_required(['A'])
 def add_schoolers(request):
     if request.method == 'POST':
-        excel_file = request.FILES['excel_file']
-        df = pd.read_excel(excel_file)
+        try:
+            excel_file = request.FILES['excel_file']
+            df = pd.read_excel(excel_file)
+        except:
+            messages.error(request, 'Файл не был заугружен.')
+            messages.warning(request, 'Прроверьте формат или наличие подгрузки.')
+            return redirect('add_schoolers')
+        
         role = request.POST.get('Role')
         
         

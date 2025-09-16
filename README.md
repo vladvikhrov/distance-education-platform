@@ -21,3 +21,6 @@
    ```
 
 Access the app at `http://127.0.0.1:8000`.
+
+4. Meke .env file.
+   Make your SECRET_KEY for django
