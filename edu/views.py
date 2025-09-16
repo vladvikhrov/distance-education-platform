@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+
+from edu_tools.decorators import role_required
 from .models import Lessons
 from edu.forms import LessonForm
 from django.contrib import messages
@@ -34,56 +36,44 @@ def lesson_detail(request, lesson_id):
     return render(request, 'detail_lesson.html', {'lesson': lesson, 'form': form})
     
 # Student
+@role_required(['S'])
 def students(request):
-    if request.user.role == 'S':
-        return render(request, "main_html/for_students.html")
-    else:
-        return HttpResponseForbidden()
+    return render(request, "main_html/for_students.html")
 
+@role_required(['S', 'A'])
 def list_homework_view(request):
-    if request.user.role != 'T':
-        subjects = request.user.classes_id.sub_id.all()
-        sub_name = request.GET.get('sub_name') or None
-        if sub_name != None:
-            lessons = subjects.get(name=sub_name).lesson_id.all()
-        context = {
-            'lessons': None if sub_name==None else lessons,
-            'subjects': subjects,
-            'active_sub': sub_name,
-            }
-        return render(request, "student/list_homework.html", context=context)
-    else:
-        return HttpResponseForbidden()
+    subjects = request.user.classes_id.sub_id.all()
+    sub_name = request.GET.get('sub_name') or None
+    if sub_name != None:
+        lessons = subjects.get(name=sub_name).lesson_id.all()
+    context = {
+        'lessons': None if sub_name==None else lessons,
+        'subjects': subjects,
+        'active_sub': sub_name,
+        }
+    return render(request, "student/list_homework.html", context=context)
+
 # Teacher
+@role_required(['T'])
 def teachers(request):
-    if request.user.role == 'T':
-        return render(request, "main_html/for_teachers.html")
-    else:
-        return HttpResponseForbidden()
+    return render(request, "main_html/for_teachers.html")
 
+@role_required(['T', 'A'])
 def redaction(request):
-    if request.user.role != "S":
-        subjects = request.user.subjects_id.all()
-        sub_name = request.GET.get('sub_name') or None
-        if sub_name != None:
-            lessons = subjects.get(name=sub_name).lesson_id.all()
-            pass
+    subjects = request.user.subjects_id.all()
+    sub_name = request.GET.get('sub_name') or None
+    if sub_name != None:
+        lessons = subjects.get(name=sub_name).lesson_id.all()
+        pass
 
-        context = {
-            'lessons': None if sub_name==None else lessons,
-            'subjects': subjects,
-            'active_sub': sub_name,
-            }
-        return render(request, "teacher/redaction.html", context=context)
-    else:
-        return HttpResponseForbidden()
+    context = {
+        'lessons': None if sub_name==None else lessons,
+        'subjects': subjects,
+        'active_sub': sub_name,
+        }
+    return render(request, "teacher/redaction.html", context=context)
 
 # Admin
+@role_required(['A'])
 def admin_panel(request):
-    if request.user.role == 'A':
-        return render(request, "main_html/for_admin.html")
-    else:
-        return HttpResponseForbidden()
-
-
-    
+    return render(request, "main_html/for_admin.html")
