@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Состав школы - Платформа{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h1 class="mb-4">
+      <i class="fas fa-school text-primary me-2"></i>Управление составом школы
+    </h1>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Загрузка пользователей -->
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Загрузка пользователей</h5>
+      </div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'add_schoolers' %}">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label for="userFile" class="form-label fw-bold">Файл с пользователями (Excel)</label>
+            <input class="form-control" type="file" id="userFile" name="excel_file" accept=".xlsx,.xls" required>
+            <div class="form-text">
+              <small>Формат: Логин, Имя, Фамилия, Отчество, Пароль</small>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Тип пользователя</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="Role" id="roleStudent" value="S" checked>
+              <label class="form-check-label" for="roleStudent">
+                <i class="fas fa-user-graduate me-1"></i>Ученики
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="Role" id="roleTeacher" value="T">
+              <label class="form-check-label" for="roleTeacher">
+                <i class="fas fa-chalkboard-teacher me-1"></i>Учителя
+              </label>
+            </div>
+          </div>
+          
+          <button class="btn btn-primary w-100" type="submit">
+            <i class="fas fa-upload me-2"></i>Загрузить пользователей
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Загрузка классов и предметов -->
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-book me-2"></i>Загрузка классов и предметов</h5>
+      </div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'load_classes_subjects' %}">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label for="classFile" class="form-label fw-bold">Файл с классами и предметами (Excel)</label>
+            <input class="form-control" type="file" id="classFile" name="excel_file" accept=".xlsx,.xls" required>
+            <div class="form-text">
+              <small>
+                <strong>Формат:</strong><br>
+                • Название листа = класс (например: "9В", "11А")<br>
+                • Столбцы = предметы (например: "Математика", "Русский язык")<br>
+                • Классы с заглавной буквы!
+              </small>
+            </div>
+          </div>
+          
+          <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <small>К каждому предмету автоматически добавится класс: "Русский язык 9В"</small>
+          </div>
+          
+          <button class="btn btn-success w-100" type="submit">
+            <i class="fas fa-upload me-2"></i>Загрузить структуру
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Статистика -->
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Статистика школы</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="card bg-light">
+              <div class="card-body text-center">
+                <h2 class="text-primary">{{ total_classes }}</h2>
+                <p class="mb-0">Всего классов</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card bg-light">
+              <div class="card-body text-center">
+                <h2 class="text-success">{{ total_subjects }}</h2>
+                <p class="mb-0">Всего предметов</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card bg-light">
+              <div class="card-body text-center">
+                <h2 class="text-info">{{ total_students }}</h2>
+                <p class="mb-0">Всего учеников</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Детальная статистика по классам -->
+        {% if classes_stats %}
+        <hr>
+        <h6 class="mb-3">Детальная информация по классам</h6>
+        <div class="table-responsive">
+          <table class="table table-hover table-striped">
+            <thead class="table-primary">
+              <tr>
+                <th>Класс</th>
+                <th>Количество предметов</th>
+                <th>Количество учеников</th>
+                <th>Предметы</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for class_info in classes_stats %}
+              <tr>
+                <td><strong>{{ class_info.name }}</strong></td>
+                <td>
+                  <span class="badge bg-primary">{{ class_info.subjects_count }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-info">{{ class_info.students_count }}</span>
+                </td>
+                <td>
+                  <small>{{ class_info.subjects|join:", " }}</small>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Данные отсутствуют. Загрузите структуру школы.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -38,6 +38,10 @@ db.sqlite3      # Common Django database file
 /media
 media/
 media/*
+*.xls
+*.xlsx
+*.xls#
+*.xlsx#
 
 # Documentation
 docs/_build/

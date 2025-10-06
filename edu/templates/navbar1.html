@@ -1,75 +1,100 @@
-<nav class="navbar navbar-expand-lg" style="background-color: #e3f2fd">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
   <div class="container-fluid">
-    <div width="16" height="16" class="special-div"></div>
-    <a class="navbar-brand" href="{% url 'home' %}">Education-Platform</a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarTogglerDemo02"
-      aria-controls="navbarTogglerDemo02"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+    <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'home' %}">
+      <i class="fas fa-graduation-cap me-2"></i>
+      <span>Education Platform</span>
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Переключить навигацию">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+    
+    <div class="collapse navbar-collapse" id="navbarMain">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         {% if user.role == 'T' %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'edu_program' %}"
-            >Создать урок</a
-          >
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'redaction_teachers' %}">Уроки</a>
-        </li>
-
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'edu_program' %}">
+              <i class="fas fa-plus-circle me-1"></i>Создать урок
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'redaction_teachers' %}">
+              <i class="fas fa-edit me-1"></i>Мои уроки
+            </a>
+          </li>
+        
         {% elif user.role == 'S' %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'homework-list' %}"
-            >Список заданий</a
-          >
-        </li>
-
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'homework-list' %}">
+              <i class="fas fa-tasks me-1"></i>Домашние задания
+            </a>
+          </li>
+        
         {% elif user.role == 'A' %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'class_change' %}"
-            >Перевод учеников</a
-          >
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'edu_program' %}"
-            >Изменение программы</a
-          >
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'add_schoolers' %}"
-            >Добавить пользователя</a
-          >
-        </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'class_change' %}">
+              <i class="fas fa-user-graduate me-1"></i>Перевод учеников
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'edu_program' %}">
+              <i class="fas fa-book me-1"></i>Программа обучения
+            </a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-cogs me-1"></i>Администрирование
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+              <li>
+                <a class="dropdown-item" href="{% url 'school_structure' %}">
+                  <i class="fas fa-school me-2 text-success"></i>Состав школы
+                </a>
+              </li>
+              {% if user.is_superuser %}
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'admin:index' %}">
+                    <i class="fas fa-shield-alt me-2 text-danger"></i>Админ панель Django
+                  </a>
+                </li>
+              {% endif %}
+            </ul>
+          </li>
         {% endif %}
       </ul>
-      <div class="navbar-nav">
-        {% if user.is_authenticated %} {% if user.is_superuser %}
-        <a class="nav-link" href="{% url 'admin:index' %}">Админ панель</a>
-        {% endif %}
-        <a class="nav-link" aria-current="page" style="margin-right: 5px">
-          <i class="fa-solid fa-user"></i>
-          {{ user.first_name}} {{user.last_name}} - {{user.get_role_display}}
-        </a>
-
-        <div class="d-flex">
-          <a class="btn btn-outline-secondary" href="{% url 'logout_view'%}"
-            >Выйти</a
-          >
-        </div>
+      
+      <div class="d-flex align-items-center">
+        {% if user.is_authenticated %}
+          <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-user-circle me-2"></i>
+              <span class="d-none d-md-inline">{{ user.first_name }} {{ user.last_name }}</span>
+              <span class="d-inline d-md-none">Профиль</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              <li>
+                <span class="dropdown-item-text">
+                  <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+                </span>
+              </li>
+              <li>
+                <span class="dropdown-item-text text-muted small">
+                  <i class="fas fa-id-badge me-1"></i>{{ user.get_role_display }}
+                </span>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="{% url 'logout_view' %}">
+                  <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                </a>
+              </li>
+            </ul>
+          </div>
         {% else %}
-        <div class="d-flex">
-          <a class="btn btn-outline-secondary" href="{% url 'login_view'%}"
-            >Войти</a
-          >
-        </div>
+          <a class="btn btn-light" href="{% url 'login_view' %}">
+            <i class="fas fa-sign-in-alt me-1"></i>Войти
+          </a>
         {% endif %}
       </div>
     </div>

@@ -1,12 +1,10 @@
-from django.shortcuts import render
-from django.http import HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 from edu_tools.decorators import role_required
 from .models import Lessons
 from edu.forms import LessonForm
-from django.contrib import messages
 # в дальнейшем использовать LoginRequiredMixin
 
 # urls for main_html dir
