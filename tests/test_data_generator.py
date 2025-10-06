@@ -1,6 +1,12 @@
+"""
+Скрипт для генерации примеров Excel файлов
+Запустите: python generate_excel_examples.py
+"""
+
 import pandas as pd
 from datetime import datetime
 
+# Цвета для оформления (опционально, если установлен openpyxl)
 try:
     from openpyxl import load_workbook
     from openpyxl.styles import Font, PatternFill, Alignment
@@ -13,7 +19,8 @@ except ImportError:
 def create_students_example():
     """Создает пример файла с учениками"""
     
-    students_data = {
+    # Вариант 1: с столбцом "Класс"
+    students_data_v1 = {
         'Логин': [
             'ivanov_a',
             'petrova_m',
@@ -73,12 +80,102 @@ def create_students_example():
             'olga123',
             'nikolay24',
             'tanya2024'
+        ],
+        'Класс': [
+            '9А',
+            '9А',
+            '9Б',
+            '9Б',
+            '10А',
+            '10А',
+            '10Б',
+            '10Б',
+            '11А',
+            '11А'
         ]
     }
     
-    df = pd.DataFrame(students_data)
+    # Вариант 2: с столбцами "Номер" и "Буква"
+    students_data_v2 = {
+        'Логин': [
+            'ivanov_a',
+            'petrova_m',
+            'sidorov_d',
+            'kozlova_e',
+            'smirnov_i',
+            'lebedeva_a',
+            'morozov_p',
+            'volkova_o',
+            'sokolov_n',
+            'novikova_t'
+        ],
+        'Имя': [
+            'Александр',
+            'Мария',
+            'Дмитрий',
+            'Елена',
+            'Иван',
+            'Анастасия',
+            'Петр',
+            'Ольга',
+            'Николай',
+            'Татьяна'
+        ],
+        'Фамилия': [
+            'Иванов',
+            'Петрова',
+            'Сидоров',
+            'Козлова',
+            'Смирнов',
+            'Лебедева',
+            'Морозов',
+            'Волкова',
+            'Соколов',
+            'Новикова'
+        ],
+        'Отчество': [
+            'Петрович',
+            'Ивановна',
+            'Александрович',
+            'Сергеевна',
+            '',
+            'Викторовна',
+            'Михайлович',
+            'Дмитриевна',
+            'Андреевич',
+            'Николаевна'
+        ],
+        'Пароль': [
+            'pass1234',
+            'maria2024',
+            'dima2024',
+            'elena123',
+            'ivan2024',
+            'nastya123',
+            'petr2024',
+            'olga123',
+            'nikolay24',
+            'tanya2024'
+        ],
+        'Номер': [9, 9, 9, 9, 10, 10, 10, 10, 11, 11],
+        'Буква': ['А', 'А', 'Б', 'Б', 'А', 'А', 'Б', 'Б', 'А', 'А']
+    }
+    
+    # Создаем файл с двумя листами
     filename = 'пример_ученики.xlsx'
-    df.to_excel(filename, index=False, sheet_name='Ученики')
+    with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+        df_v1 = pd.DataFrame(students_data_v1)
+        df_v1.to_excel(writer, sheet_name='Вариант 1 (Класс)', index=False)
+        
+        df_v2 = pd.DataFrame(students_data_v2)
+        df_v2.to_excel(writer, sheet_name='Вариант 2 (Номер+Буква)', index=False)
+    
+    # Форматирование
+    if HAS_OPENPYXL:
+        wb = load_workbook(filename)
+        for sheet_name in wb.sheetnames:
+            format_excel_sheet(wb[sheet_name])
+        wb.save(filename)
     
     # Форматирование (если доступен openpyxl)
     if HAS_OPENPYXL:
@@ -240,12 +337,9 @@ def create_classes_subjects_example():
     return filename
 
 
-def format_excel(filename, sheet_name):
-    """Форматирует Excel файл (заголовки)"""
+def format_excel_sheet(ws):
+    """Форматирует лист Excel (заголовки)"""
     try:
-        wb = load_workbook(filename)
-        ws = wb[sheet_name]
-        
         # Форматирование заголовков
         header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
         header_font = Font(bold=True, color="FFFFFF", size=12)
@@ -267,10 +361,19 @@ def format_excel(filename, sheet_name):
                     pass
             adjusted_width = min(max_length + 2, 50)
             ws.column_dimensions[column_letter].width = adjusted_width
-        
+    except Exception as e:
+        print(f"⚠️ Ошибка форматирования: {e}")
+
+
+def format_excel(filename, sheet_name):
+    """Форматирует Excel файл (заголовки) - обратная совместимость"""
+    try:
+        wb = load_workbook(filename)
+        ws = wb[sheet_name]
+        format_excel_sheet(ws)
         wb.save(filename)
     except Exception as e:
-        print(f"Ошибка форматирования: {e}")
+        print(f"⚠️ Ошибка форматирования: {e}")
 
 
 def format_classes_excel(filename):

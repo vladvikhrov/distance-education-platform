@@ -1,6 +1,5 @@
 from django.shortcuts import redirect, render
 from django.contrib import messages
-from django.db.models import Count, Q
 
 import pandas as pd
 
@@ -16,36 +15,75 @@ from .forms import LessonsForm
 def add_schoolers(request):
     if request.method == 'POST':
         try:
-            excel_file = request.FILES['excel_file']
-            df = pd.read_excel(excel_file)
+            df = pd.read_excel(request.FILES['excel_file'])
         except:
             messages.error(request, 'Файл не был заугружен.')
             messages.warning(request, 'Проверьте формат или наличие подгрузки.')
             return redirect('add_schoolers')
         
         role = request.POST.get('Role')
-        
-        
+        success_count = 0
+        error_count = 0
+
         for index, row in df.iterrows():
             username = row.get('Логин')
             name = row.get('Имя')
             surname = row.get('Фамилия')
             password = row.get('Пароль')
-            patronymic = row.get('Отчество')
+            patronymic = row.get('Отчество', ' ')
 
             if not isinstance(patronymic, str):
                 patronymic = ''
 
-            if None in [username, name, surname, password, patronymic]:
-                messages.error(request, 'Файл имеет не верный формат.')
-                return redirect('add_schoolers')
+            if None in [username, name, surname, password]:
+                messages.error(request, f'Строка {index + 2}: отсутствуют обязательные поля.')
+                error_count += 1
+                continue
+
+            # КОД ДЛЯ ДОБАВЛЕНИЕ ПОЛЬЗОВАТЛЕЙ
+            # получаем класс если юзер - ученик
+            class_obj = None
+            if role == "S":
+                class_name = row.get('Класс')
+
+                if not pd.isna(class_name):
+                    class_name = str(class_name).strip()
+
+                    if len(class_name) >= 2:
+                        number = class_name[:-1]
+                        letter = class_name[-1]
+
+                        try:
+                            class_obj = Classes.objects.get(number=number, letter=letter)
+                        except Classes.DoesNotExist:
+                            messages.warning(request, f'Строка {index + 2}: класс "{class_name}" не найден в базе. Пользователь создан без класса.')
             
-            if username and password and name and surname:  
-                User.objects.create_user(login=username, password=password, first_name=name, last_name=surname, patronymic=patronymic, role=role)
+            try: 
+                if username and password and name and surname:
+                    user = User.objects.create_user(
+                        login=username, 
+                        password=password, 
+                        first_name=name, 
+                        last_name=surname, 
+                        patronymic=patronymic, 
+                        role=role,
+                    )
+                    # Привязка класса, если есть
+                    if class_obj:
+                        user.classes_id = class_obj
+                        user.save()
+
+                    success_count += 1
+            except Exception as e:
+                messages.error(request, f'Строка {index + 2}: ошибка при создании пользователя {username}. {str(e)}')
+                error_count += 1
+        if success_count > 0:
+            messages.success(request, f'✅ Успешно добавлено пользователей: {success_count}')
+        if error_count > 0:
+            messages.warning(request, f'⚠️ Ошибок при добавлении: {error_count}')
         
         return redirect('school_structure')
-    messages.success(request, '✅ Загрузка завершина, все ок.')
-    return redirect('school_structure')  
+    return redirect('school_structure')
 
 # Добавление уроков
 @role_required(['A', 'T'])
