@@ -10,7 +10,7 @@ from edu.models import Classes, Lessons, Subjects
 from .forms import LessonsForm
 
 
-# код для добавление учеников или учителей
+# для добавление учеников или учителей
 @role_required(['A'])
 def add_schoolers(request):
     if request.method == 'POST':
@@ -119,9 +119,9 @@ def class_change(request):
     if request.method == 'POST':
         selected_students = request.POST.getlist('selected_students')
         class_name= int(request.POST.get('class_filter'))
-        print(class_name)
         for selection in selected_students: 
-                User.objects.filter(pk=int(selection)).update(classes_id=class_name)
+            User.objects.filter(pk=int(selection)).update(classes_id=class_name)
+        messages.success(request, f'{len(selected_students)} изменений в структуре студентов')
     return render(request, 'tools/class_change.html', {'students': students, 'classes': classes})
 
 # автодобавлени классов и предмету

@@ -1,102 +1,156 @@
-{% extends 'base.html' %} {% block content %} {% load static %}
-<head>
-  <link
-    rel="stylesheet"
-    href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css"
-  />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css"
-  />
-</head>
-<body>
-  <div class="container">
-    <h1>Перевод учеников</h1>
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+<body class="bg-light">
+  <div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm bg-primary text-white">
+          <div class="card-body py-4">
+            <h1 class="display-6 mb-0">
+              <i class="bi bi-people-fill me-2"></i>
+              Перевод учеников
+            </h1>
+            <p class="mb-0 mt-2 opacity-75">Управление переводом учеников между классами</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <form action="" method="post">
       {% csrf_token %}
+      
+      <div class="row">
+        <div class="col-12">
+          <!-- Table Card -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+              <h5 class="mb-0 text-primary">
+                <i class="bi bi-table me-2"></i>
+                Список учеников
+              </h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="myTable" class="table table-hover table-striped mb-0">
+                  <thead class="table-primary">
+                    <tr>
+                      <th class="text-center" style="width: 50px;">
+                        <input 
+                          type="checkbox" 
+                          id="action-toggle" 
+                          onclick="toggleCheckboxes(this)"
+                          class="form-check-input"
+                        />
+                      </th>
+                      <th>Имя</th>
+                      <th>Фамилия</th>
+                      <th>Отчество</th>
+                      <th>Класс</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for student in students %}
+                    <tr>
+                      <td class="text-center">
+                        <input 
+                          type="checkbox" 
+                          name="selected_students" 
+                          value="{{ student.id }}"
+                          class="form-check-input"
+                        />
+                      </td>
+                      <td>{{ student.first_name }}</td>
+                      <td>{{ student.last_name }}</td>
+                      <td>{{ student.patronymic }}</td>
+                      <td>
+                        {% if student.classes_id %}
+                          <span>{{ student.classes_id }}</span>
+                        {% else %}
+                          <span class="badge rounded-pill text-bg-light">Нет класса</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table> 
+              </div>
+            </div>
+          </div>
 
-      <table id="myTable" class="table">
-        <thead>
-          <tr>
-            <th>
-              <input
-                type="checkbox"
-                id="action-toggle"
-                onclick="toggleCheckboxes(this)"
-              />
-            </th>
-            <th>Имя</th>
-            <th>Фамилия</th>
-            <th>Отчество</th>
-            <th>Класс</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for student in students %}
-          <tr>
-            <td>
-              <input
-                type="checkbox"
-                name="selected_students"
-                value="{{ student.id }}"
-              />
-            </td>
-            <td>{{ student.first_name }}</td>
-            <td>{{ student.last_name }}</td>
-            <td>{{ student.patronymic }}</td>
-            <td>{{ student.classes_id|default:"Нет" }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <h4>Перевести всех учеников в:</h4>
-      <div class="form-group">
-        <select class="form-control" name="class_filter">
-          {% for class in classes %}
-          <option value="{{class.id}}">{{class}}</option>
-          {% endfor %}
-        </select>
+          <!-- Action Card -->
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-3">
+              <h5 class="mb-0">
+                <i class="bi bi-arrow-right-circle me-2"></i>
+                Действия с выбранными учениками
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row align-items-end">
+                <div class="col-md-8 mb-3 mb-md-0">
+                  <label for="class_filter" class="form-label fw-semibold text-primary">
+                    Перевести выбранных учеников в класс:
+                  </label>
+                  <select class="form-select form-select-lg" name="class_filter" id="class_filter" required>
+                    <option value="" disabled selected>Выберите класс...</option>
+                    {% for class in classes %}
+                    <option value="{{class.id}}">{{class}}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Применить изменения
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <br />
-      <!-- <div class="form-group">
-            <select class="form-control" name="action">
-                <option value="assign_class">Assign to Class</option>
-                <option value="transfer_class">Transfer to Class</option>
-            </select>
-        </div> -->
-      <button type="submit" class="btn btn-primary">Применить изменения</button>
     </form>
   </div>
-  <!-- Include Bootstrap JS -->
+
+  <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
   <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css"></script>
   <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-  <script type="text/javascript">
-    $(document).ready(function () {
-      $("#myTable").DataTable();
-    });
-    new DataTable("#myTable", {
-      language: {
-        infoEmpty: "Нет актуальной информации",
-        infoFiltered: "(Отсортировано от _MAX_ всех записей)",
-        lengthMenu: "Отображается _MENU_ учеников на страницу",
-        zeroRecords: "Ничего не найдено - простите",
-        search: "Поиск по таблице:",
-      },
-    });
-  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
   <script>
+    $(document).ready(function() {
+      $('#myTable').DataTable({
+        language: {
+          info: "Показано с _START_ по _END_ из _TOTAL_ учеников",
+          infoEmpty: "Нет актуальной информации",
+          infoFiltered: "(отфильтровано из _MAX_ записей)",
+          lengthMenu: "Показать _MENU_ учеников",
+          zeroRecords: "Ничего не найдено",
+          search: "Поиск:",
+          paginate: {
+            first: "Первая",
+            last: "Последняя",
+            next: "Следующая",
+            previous: "Предыдущая"
+          }
+        },
+        pageLength: 10,
+        responsive: true,
+        order: [[1, 'asc']]
+      });
+    });
+
     function toggleCheckboxes(source) {
-      var checkboxes = document.querySelectorAll(
-        'input[type="checkbox"]:not(.hidden)'
-      );
-      for (var i = 0; i < checkboxes.length; i++) {
-        if (checkboxes[i] != source) {
-          checkboxes[i].checked = source.checked;
-        }
-      }
+      var checkboxes = document.querySelectorAll('input[name="selected_students"]');
+      checkboxes.forEach(function(checkbox) {
+        checkbox.checked = source.checked;
+      });
     }
   </script>
 </body>
+
 {% endblock content %}
