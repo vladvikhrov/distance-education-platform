@@ -1,31 +1,91 @@
 from django import forms
-
-from users.models import User
-
-from edu.models import Lessons, Subjects
-from django.forms.widgets import DateInput
-
-class UserForm(forms.Form):
-    class Meta:
-        model = User
-        fields = '__all__'
-
+from edu.models import Lessons, Subjects, Classes
 
 class LessonsForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        super(LessonsForm, self).__init__(*args, **kwargs)
-        if self.user:
-            self.fields['class_field'].queryset = self.user.subjects_id.all()
-            
     class Meta:
         model = Lessons
-        fields = ['topic', 'additionals', 'home_work', 'data', 'email', 'document']
+        fields = ['topic', 'data', 'additionals', 'home_work', 'email', 'document']
+        widgets = {
+            'topic': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Введите тему урока'
+            }),
+            'data': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'additionals': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Дополнительная информация (необязательно)'
+            }),
+            'home_work': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Описание домашнего задания'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'email@example.com'
+            }),
+            'document': forms.FileInput(attrs={
+                'class': 'form-control'
+            })
+        }
+        labels = {
+            'topic': 'Тема урока',
+            'data': 'Дата урока',
+            'additionals': 'Описание',
+            'home_work': 'Домашнее задание',
+            'email': 'Email',
+            'document': 'Файл урока'
+        }
 
-    class_field = forms.ModelChoiceField(label='Предмет - Класс', queryset=Subjects.objects.all(), widget=forms.Select(attrs={'class': 'form-control'}))
-    topic = forms.CharField(label='Тема', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Тема урока"}))
-    additionals = forms.CharField(label='Описание', widget=forms.Textarea({'class': 'form-control', 'rows': 3}), required=False)
-    email = forms.EmailField(label='Почта', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': "name@example.com"},), required=False)
-    home_work = forms.CharField(label='Домашнее задание', widget=forms.Textarea({'class': 'form-control', 'rows': 3}))
-    data = forms.DateField(label='Выберите дату', widget=DateInput(attrs={'class': 'form-control', 'type': 'date'}))
-    document = forms.FileField(label='Файл урока', widget=forms.FileInput(attrs={'class': 'form-control'}), required=False)
+    class_field = forms.ModelChoiceField(
+        label='Класс',
+        queryset=Classes.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_class_field'}),
+        empty_label='Выберите класс'
+    )
+    
+    subject = forms.ModelChoiceField(
+        label='Предмет',
+        queryset=Subjects.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_subject'}),
+        empty_label='Сначала выберите класс'
+    )
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Для учителей - только их предметы
+        if user and user.role == 'T':
+            teacher_subjects = user.subjects_id.all()
+            self.fields['subject'].queryset = teacher_subjects
+            
+            # Получаем классы, в которых есть предметы учителя
+            class_ids = Classes.objects.filter(sub_id__in=teacher_subjects).distinct()
+            self.fields['class_field'].queryset = class_ids
+        else:
+            # Для админов - все классы и предметы
+            self.fields['class_field'].queryset = Classes.objects.all()
+            self.fields['subject'].queryset = Subjects.objects.all()
+        
+        # Если в POST передан класс, фильтруем предметы
+        if 'class_field' in self.data:
+            try:
+                class_id = int(self.data.get('class_field'))
+                class_obj = Classes.objects.get(id=class_id)
+                
+                if user and user.role == 'T':
+                    # Пересечение: предметы учителя И предметы класса
+                    self.fields['subject'].queryset = user.subjects_id.filter(
+                        id__in=class_obj.sub_id.all()
+                    )
+                else:
+                    self.fields['subject'].queryset = class_obj.sub_id.all()
+            except (ValueError, TypeError, Classes.DoesNotExist):
+                pass
+        
+        self.order_fields(['class_field', 'subject', 'topic', 'data', 'additionals', 'home_work', 'email', 'document'])

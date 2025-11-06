@@ -89,26 +89,24 @@ def add_schoolers(request):
 @role_required(['A', 'T'])
 def edu_program(request):
     if request.method == 'POST':
-        form = LessonsForm(request.POST, request.FILES, user = request.user)
-        if form.is_valid():
-
-            lesson = Lessons.objects.create(
-                topic = request.POST.get('topic'),
-                additionals = request.POST.get('additionals'),
-                home_work = request.POST.get('home_work'),
-                data = request.POST.get('data'),
-                email = request.POST.get('email'),
-                document = request.FILES['document'],
-            )
-            
-            subject = Subjects.objects.get(id=request.POST.get('class_field'))
-            subject.lesson_id.add(lesson)
-            subject.save()
-            messages.success(request, 'Запись успешно создана')
+        form = LessonsForm(request.POST, request.FILES, user=request.user)
         
-        return redirect('redaction_teachers')
+        if form.is_valid():
+            lesson = form.save()
+            
+            subject = form.cleaned_data['subject']
+            subject.lesson_id.add(lesson)
+            
+            messages.success(request, f'✅ Урок "{lesson.topic}" успешно создан')
+            return redirect('redaction_teachers')
+        else:
+            # Показываем ошибки
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
     else:
-        form = LessonsForm(user = request.user)
+        form = LessonsForm(user=request.user)
+    
     return render(request, 'tools/edu_program.html', {'form': form})
 
 # измениение классов по классам
