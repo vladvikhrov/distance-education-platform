@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-
+import markdown
+from config import settings
 from edu_tools.decorators import role_required
 from .models import Lessons
 from edu.forms import LessonForm
@@ -9,7 +10,22 @@ from edu.forms import LessonForm
 
 # urls for main_html dir
 def home(request):
-    return render(request, "main_html/add_base.html")
+    readme_path = settings.BASE_DIR / 'README.md'
+    with open(readme_path, 'r', encoding='utf-8') as f:
+        md_text = f.read()
+    
+    html_content = markdown.markdown(
+        md_text, 
+        extensions=[
+            'fenced_code',
+            'tables',
+            'nl2br',
+            'sane_lists',
+            'codehilite',
+        ]
+    )
+    
+    return render(request, 'main_html/add_base.html', {'readme_html': html_content})
 
 @login_required
 def lesson_detail(request, lesson_id):

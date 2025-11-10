@@ -1,10 +1,26 @@
-{% extends 'base.html' %} {% block content %}
-<h1>Главная страница</h1>
-  <h2>Справочная информация:</h2>
-    <hr>
-    <p>Сайт находится на стадии разработки. <br>
-    1. Файл с учениками для занесения в бд у меня. Нужен строго определенный файл, которые состоит из особых полей. <br>
-    2. Нужно прописать правила для администратора/справку о работе с проектом.  <br>
-    3. Нужны сноски для справочной информации у всех типов пользователей. Что за что отвечает. (отя надо бы дизайн сделать сначала нормальный)
-    </p>
+{% extends 'base.html' %}
+
+{% block content %}
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+    <style>
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+        }
+        
+        @media (max-width: 767px) {
+            .markdown-body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<div class="markdown-body">
+    {{ readme_html|safe }}
+</div>
 {% endblock content %}

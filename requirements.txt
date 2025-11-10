@@ -1,6 +1,10 @@
 asgiref==3.9.1
+certifi==2025.10.5
+charset-normalizer==3.4.4
 Django==5.2.6
 et_xmlfile==2.0.0
+idna==3.11
+Markdown==3.10
 numpy==2.3.3
 openpyxl==3.1.5
 pandas==2.3.2
@@ -10,3 +14,4 @@ pytz==2025.2
 six==1.17.0
 sqlparse==0.5.3
 tzdata==2025.2
+urllib3==2.5.0

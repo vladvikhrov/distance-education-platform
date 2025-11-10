@@ -3,10 +3,10 @@ from django.contrib import messages
 
 import pandas as pd
 
-from edu.models import Classes, Lessons, Subjects
+from edu.models import Classes, Subjects
 from edu_tools.decorators import role_required
 from users.models import User
-from edu.models import Classes, Lessons, Subjects
+from edu.models import Classes, Subjects
 from .forms import LessonsForm
 
 
