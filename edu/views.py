@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import markdown
@@ -30,6 +30,7 @@ def home(request):
 @login_required
 def lesson_detail(request, lesson_id):
     lesson = get_object_or_404(Lessons, pk=lesson_id)
+    subjects = lesson.subjects.all()
     if lesson.document:
         initial_document = {'document': lesson.document}
     else: 
@@ -39,15 +40,21 @@ def lesson_detail(request, lesson_id):
         if request.method == "POST":
             form = LessonForm(request.POST, request.FILES, instance=lesson)
             if form.is_valid():
+                if form.cleaned_data.get('remove_file'):
+                    lesson.document.delete(save=False)
+                    lesson.document = None
                 form.save()
                 
                 if 'document' in request.FILES:
                     lesson.document = request.FILES['document']
                     lesson.save()
                 messages.success(request, 'Изменения сохранены')
+                return redirect('detail_lesson', lesson_id=lesson.id)
+            else:
+                messages.error(request, 'Ошибка при сохранении. Проверьте данные.')
         else:
             form = LessonForm(instance=lesson, initial=initial_document)
-    return render(request, 'detail_lesson.html', {'lesson': lesson, 'form': form})
+    return render(request, 'detail_lesson.html', {'lesson': lesson, 'form': form, 'subjects': subjects})
     
 # Student
 @role_required(['S'])

@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from edu.forms import LessonForm
+
 from .models import Classes, Subjects, Lessons
 
 @admin.register(Classes)
@@ -14,4 +16,5 @@ class Subjectsdmin(admin.ModelAdmin):
 class LessonsAdmin(admin.ModelAdmin):
     list_display = ('topic', 'email', 'data')
     list_filter = ('data', 'email')
+    form = LessonForm
 

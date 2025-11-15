@@ -32,7 +32,7 @@ class Lessons(models.Model):
 
 class Subjects(models.Model):
     name = models.CharField(max_length=20, verbose_name='Название')
-    lesson_id = models.ManyToManyField(Lessons, verbose_name='Уроки', blank=True)
+    lesson_id = models.ManyToManyField(Lessons, verbose_name='Уроки', blank=True, related_name='subjects')
     
     class Meta:
         verbose_name = 'Предмет'
