@@ -9,7 +9,6 @@ class UserManager(BaseUserManager):
         """
         if not login:
             raise ValueError('The given login must be set')
-        # login = self.normalize_login(login)
         user = self.model(login=login, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -20,9 +19,18 @@ class UserManager(BaseUserManager):
         return self._create_user(login, password, **extra_fields)
 
     def create_superuser(self, login, password, **extra_fields):
-        extra_fields.setdefault('is_superuser', True)
 
+        if not extra_fields.get('first_name'):
+            raise ValueError('Superuser must have first_name')
+        if not extra_fields.get('last_name'):
+            raise ValueError('Superuser must have last_name')
+        if not extra_fields.get('patronymic'):
+            raise ValueError('Superuser must have patronymic')
+        
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'A')
+        
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
-
+        
         return self._create_user(login, password, **extra_fields)
