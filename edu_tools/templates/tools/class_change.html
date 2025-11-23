@@ -4,110 +4,108 @@
 
 <body class="bg-light">
   <div class="container-fluid py-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <div class="card border-0 shadow-sm bg-primary text-white">
-          <div class="card-body py-4">
-            <h1 class="display-6 mb-0">
-              <i class="bi bi-people-fill me-2"></i>
-              Перевод учеников
-            </h1>
-            <p class="mb-0 mt-2 opacity-75">Управление переводом учеников между классами</p>
-          </div>
-        </div>
+    <!-- Header -->
+    <div class="card border-0 shadow-sm bg-primary text-white mb-4">
+      <div class="card-body py-4">
+        <h1 class="display-6 mb-0">
+          <i class="bi bi-people-fill me-2"></i>
+          Перевод учеников
+        </h1>
       </div>
     </div>
 
-    <form action="" method="post">
+    <form action="" method="post" id="mainForm">
       {% csrf_token %}
       
-      <div class="row">
-        <div class="col-12">
-          <!-- Table Card -->
-          <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white border-bottom py-3">
-              <h5 class="mb-0 text-primary">
-                <i class="bi bi-table me-2"></i>
-                Список учеников
-              </h5>
+      <!-- Фильтры -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Фильтр по классу</label>
+              <select class="form-select" id="classFilter">
+                <option value="">Все классы</option>
+                {% for class in classes %}
+                <option value="{{class}}">{{class}}</option>
+                {% endfor %}
+              </select>
             </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table id="myTable" class="table table-hover table-striped mb-0">
-                  <thead class="table-primary">
-                    <tr>
-                      <th class="text-center" style="width: 50px;">
-                        <input 
-                          type="checkbox" 
-                          id="action-toggle" 
-                          onclick="toggleCheckboxes(this)"
-                          class="form-check-input"
-                        />
-                      </th>
-                      <th>Имя</th>
-                      <th>Фамилия</th>
-                      <th>Отчество</th>
-                      <th>Класс</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for student in students %}
-                    <tr>
-                      <td class="text-center">
-                        <input 
-                          type="checkbox" 
-                          name="selected_students" 
-                          value="{{ student.id }}"
-                          class="form-check-input"
-                        />
-                      </td>
-                      <td>{{ student.first_name }}</td>
-                      <td>{{ student.last_name }}</td>
-                      <td>{{ student.patronymic }}</td>
-                      <td>
-                        {% if student.classes_id %}
-                          <span>{{ student.classes_id }}</span>
-                        {% else %}
-                          <span class="badge rounded-pill text-bg-light">Нет класса</span>
-                        {% endif %}
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table> 
-              </div>
+            <div class="col-md-4">
+              <label class="form-label">Поиск</label>
+              <input type="text" class="form-control" id="search" placeholder="Имя или фамилия...">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label d-block">&nbsp;</label>
+              <span class="badge bg-info fs-6">Выбрано: <span id="count">0</span></span>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Action Card -->
-          <div class="card border-0 shadow-sm">
-            <div class="card-header bg-primary text-white py-3">
-              <h5 class="mb-0">
-                <i class="bi bi-arrow-right-circle me-2"></i>
-                Действия с выбранными учениками
-              </h5>
+      <!-- Таблица -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Список учеников</h5>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="toggleSelect">
+              <i class="bi bi-check-square me-1"></i>Выбрать всех
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 50px;"></th>
+                  <th>Имя</th>
+                  <th>Фамилия</th>
+                  <th>Отчество</th>
+                  <th>Класс</th>
+                </tr>
+              </thead>
+              <tbody id="tbody">
+                {% for student in students %}
+                <tr data-class="{% if student.classes_id %}{{student.classes_id}}{% else %}none{% endif %}" 
+                    data-search="{{student.first_name|lower}} {{student.last_name|lower}}">
+                  <td>
+                    <input type="checkbox" name="selected_students" value="{{student.id}}" class="form-check-input check">
+                  </td>
+                  <td>{{student.first_name}}</td>
+                  <td>{{student.last_name}}</td>
+                  <td>{{student.patronymic}}</td>
+                  <td>
+                    {% if student.classes_id %}
+                      <span class="badge bg-primary">{{student.classes_id}}</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Нет класса</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Действия -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-8">
+              <label class="form-label">Перевести в класс:</label>
+              <select class="form-select form-select-lg" name="class_filter" required>
+                <option value="" disabled selected>Выберите класс</option>
+                {% for class in classes %}
+                <option value="{{class.id}}">{{class}}</option>
+                {% endfor %}
+              </select>
             </div>
-            <div class="card-body">
-              <div class="row align-items-end">
-                <div class="col-md-8 mb-3 mb-md-0">
-                  <label for="class_filter" class="form-label fw-semibold text-primary">
-                    Перевести выбранных учеников в класс:
-                  </label>
-                  <select class="form-select form-select-lg" name="class_filter" id="class_filter" required>
-                    <option value="" disabled selected>Выберите класс...</option>
-                    {% for class in classes %}
-                    <option value="{{class.id}}">{{class}}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <button type="submit" class="btn btn-primary btn-lg w-100">
-                    <i class="bi bi-check-circle me-2"></i>
-                    Применить изменения
-                  </button>
-                </div>
-              </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-check-circle me-2"></i>Применить
+              </button>
             </div>
           </div>
         </div>
@@ -115,42 +113,10 @@
     </form>
   </div>
 
-  <!-- Scripts -->
-  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-  <script>
-    $(document).ready(function() {
-      $('#myTable').DataTable({
-        language: {
-          info: "Показано с _START_ по _END_ из _TOTAL_ учеников",
-          infoEmpty: "Нет актуальной информации",
-          infoFiltered: "(отфильтровано из _MAX_ записей)",
-          lengthMenu: "Показать _MENU_ учеников",
-          zeroRecords: "Ничего не найдено",
-          search: "Поиск:",
-          paginate: {
-            first: "Первая",
-            last: "Последняя",
-            next: "Следующая",
-            previous: "Предыдущая"
-          }
-        },
-        pageLength: 10,
-        responsive: true,
-        order: [[1, 'asc']]
-      });
-    });
-
-    function toggleCheckboxes(source) {
-      var checkboxes = document.querySelectorAll('input[name="selected_students"]');
-      checkboxes.forEach(function(checkbox) {
-        checkbox.checked = source.checked;
-      });
-    }
-  </script>
+  
+  <!-- Подключаем наш JS файл -->
+  <script src="{% static 'js/class_change.js' %}"></script>
 </body>
 
 {% endblock content %}
