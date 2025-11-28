@@ -2,8 +2,6 @@
 
 Сайт для дистанционного обучения в учебном заведении. Присутствует контроль домашних заданий, БД учеников. Учителя могут создавать занятия как в электронном дневнике домашние задания, но более стабильно и гибко. Ученики могут смотреть ДЗ и выполнять их. Также есть связь с преподавателями в удобном интерфейсе. Администраторы имеют широкие возможности для редактирования платформы.
 
-Подробные планы разработки описаны в [Issues](./md/issues.md)
-
 ## Документация
 ### Подробные инструкции:
 - **[ИНСТРУКЦИЯ.md](./md/excel_instructions.md)** - Полное руководство по загрузке данных (классов, предметов и юзеров)
@@ -31,6 +29,20 @@ Access the app at `http://127.0.0.1:8000`.
 
 ### 4. Create .env file:
 Make your SECRET_KEY for Django
+
+### 5. Redis start:
+5.1 Check
+```bash
+docker run -d --name redis --network host redis:7-alpine
+docker ps | grep redis
+redis-cli ping
+```
+
+5.2 Worker:
+```bash
+celery -A config worker --loglevel=info
+```
+
 ---
 ## Excel Files Settings - Automation
 Важной частью проекта является автоматизация. Реализована функция для загрузки пользователей, классов и предметов, чтобы не создавать их вручную в Django admin.
@@ -48,7 +60,7 @@ Make your SECRET_KEY for Django
 pip install pandas openpyxl
 
 # Запустите генератор примеров
-python generate_excel_examples.py
+python ./tests/test_data_generator.py
 ```
 Будут созданы файлы-примеры:
 - `пример_ученики.xlsx` 

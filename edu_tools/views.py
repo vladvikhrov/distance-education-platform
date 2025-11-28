@@ -1,92 +1,60 @@
 from django.shortcuts import redirect, render
 from django.contrib import messages
 
-import pandas as pd
-
 from edu.models import Classes, Subjects
 from edu_tools.decorators import role_required
 from users.models import User
-from edu.models import Classes, Subjects
 from .forms import LessonsForm
 
-# вот тут добавить celery
-# для добавление учеников или учителей
+from .tasks import add_schoolers_task, load_classes_subjects_task
+
+
 @role_required(['A'])
 def add_schoolers(request):
     if request.method == 'POST':
-        try:
-            df = pd.read_excel(request.FILES['excel_file'])
-        except:
-            messages.error(request, 'Файл не был заугружен.')
-            messages.warning(request, 'Проверьте формат или наличие подгрузки.')
-            return redirect('add_schoolers')
+        if 'excel_file' not in request.FILES:
+            messages.error(request, '❌ Файл не был загружен.')
+            return redirect('school_structure')
         
+        excel_file = request.FILES['excel_file']
         role = request.POST.get('Role')
-        success_count = 0
-        error_count = 0
+        
 
-        for index, row in df.iterrows():
-            username = row.get('Логин')
-            name = row.get('Имя')
-            surname = row.get('Фамилия')
-            password = row.get('Пароль')
-            patronymic = row.get('Отчество', ' ')
-
-            if not isinstance(patronymic, str):
-                patronymic = ''
-
-            if None in [username, name, surname, password]:
-                messages.error(request, f'Строка {index + 2}: отсутствуют обязательные поля.')
-                error_count += 1
-                continue
-
-            # КОД ДЛЯ ДОБАВЛЕНИЕ ПОЛЬЗОВАТЛЕЙ
-            # получаем класс если юзер - ученик
-            class_obj = None
-            if role == "S":
-                class_name = row.get('Класс')
-
-                if not pd.isna(class_name):
-                    class_name = str(class_name).strip()
-
-                    if len(class_name) >= 2:
-                        number = class_name[:-1]
-                        letter = class_name[-1]
-
-                        try:
-                            class_obj = Classes.objects.get(number=number, letter=letter)
-                        except Classes.DoesNotExist:
-                            messages.warning(request, f'Строка {index + 2}: класс "{class_name}" не найден в базе. Пользователь создан без класса.')
+        if not excel_file.name.endswith(('.xlsx', '.xls')):
+            messages.error(
+                request,
+                '❌ Неверный формат файла. Используйте .xlsx или .xls'
+            )
+            return redirect('school_structure')
+        
+        try:
+            file_content = excel_file.read()
             
-            try: 
-                if username and password and name and surname:
-                    user = User.objects.create_user(
-                        login=username, 
-                        password=password, 
-                        first_name=name, 
-                        last_name=surname, 
-                        patronymic=patronymic, 
-                        role=role,
-                    )
-                    # Привязка класса, если есть
-                    if class_obj:
-                        user.classes_id = class_obj
-                        user.save()
-
-                    success_count += 1
-            except Exception as e:
-                messages.error(request, f'Строка {index + 2}: ошибка при создании пользователя {username}. {str(e)}')
-                error_count += 1
-        if success_count > 0:
-            messages.success(request, f'✅ Успешно добавлено пользователей: {success_count}')
-        if error_count > 0:
-            messages.warning(request, f'⚠️ Ошибок при добавлении: {error_count}')
+            task = add_schoolers_task.delay(
+                file_content=file_content,
+                role=role,
+                file_name=excel_file.name
+            )
+            
+            messages.info(
+                request,
+                f'📤 Файл "{excel_file.name}" отправлен на обработку. '
+                f'Задача ID: {task.id[:8]}... '
+                f'Результаты появятся через несколько минут.'
+            )
+            
+            request.session['last_upload_task'] = task.id
+            
+        except Exception as e:
+            messages.error(
+                request,
+                f'❌ Ошибка при запуске обработки: {str(e)}'
+            )
         
         return redirect('school_structure')
     return redirect('school_structure')
 
-# вот тут добавить celery
-# Добавление уроков
+
 @role_required(['A', 'T'])
 def edu_program(request):
     if request.method == 'POST':
@@ -98,10 +66,12 @@ def edu_program(request):
             subject = form.cleaned_data['subject']
             subject.lesson_id.add(lesson)
             
-            messages.success(request, f'✅ Урок "{lesson.topic}" успешно создан')
+            messages.success(
+                request,
+                f'✅ Урок "{lesson.topic}" успешно создан'
+            )
             return redirect('redaction_teachers')
         else:
-            # Показываем ошибки
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f'{field}: {error}')
@@ -110,99 +80,99 @@ def edu_program(request):
     
     return render(request, 'tools/edu_program.html', {'form': form})
 
-# измениение классов по классам
+
 @role_required(['A'])
 def class_change(request):
     students = User.objects.filter(role='S')
     classes = Classes.objects.all()
+    
     if request.method == 'POST':
         selected_students = request.POST.getlist('selected_students')
-        class_name= int(request.POST.get('class_filter'))
-        for selection in selected_students: 
-            User.objects.filter(pk=int(selection)).update(classes_id=class_name)
-        messages.success(request, f'{len(selected_students)} изменений в структуре студентов')
-    return render(request, 'tools/class_change.html', {'students': students, 'classes': classes})
-
-# вот тут добавить celery
-# автодобавлени классов и предмету
-@role_required(['A'])
-def load_classes_subjects(request):
-    if  request.method == "POST":
-        try: 
-            xls = pd.ExcelFile(request.FILES['excel_file'])
-        except Exception as e: 
-            messages.error(request, 'Ошибка при чтении файла.')
-            messages.warning(request, f'Ошибка: {e}')
-            return redirect('school_stucture')
+        class_name = int(request.POST.get('class_filter'))
         
-        success_classes = 0
-        success_subjects = 0
-
-        for sheet_name in xls.sheet_names:
-            # Название листа = класс (например "9В", "11А")
-            class_name = sheet_name.strip()
-
-            if len(class_name) < 2:
-                messages.warning(request, f'Некоректное название класса {class_name}')
-        
-            number = class_name[:-1]
-            letter = class_name[-1]
-
-            if not letter.isupper():
-                messages.warning(request, f'Класс {class_name}: буква должна быть заглавной!')
-                continue
-
-            class_obj, created = Classes.objects.get_or_create(
-                number=number, 
-                letter=letter,
+        for selection in selected_students:
+            User.objects.filter(pk=int(selection)).update(
+                classes_id=class_name
             )
         
-            if created:
-                success_classes += 1
+        messages.success(
+            request,
+            f'✅ {len(selected_students)} учеников переведено в новый класс'
+        )
+    
+    return render(request, 'tools/class_change.html', {
+        'students': students,
+        'classes': classes
+    })
 
-            df = pd.read_excel(xls, sheet_name=sheet_name)
 
-            for column in df.columns:
-                subject_name = str(column).strip()
-
-                if subject_name and subject_name != 'nan':
-
-                    full_subject_name = f"{subject_name} {class_name}"
-                    subject_obj, created = Subjects.objects.get_or_create(
-                        name = full_subject_name
-                    )
-                    if created:
-                        success_subjects += 1
-                    
-                    if subject_obj not in class_obj.sub_id.all():
-                        class_obj.sub_id.add(subject_obj)
-
-        if success_classes > 0 or success_subjects > 0:
-            messages.success(request, f'Успешно загружено: {success_classes} классов, {success_subjects} новых предметов')
-        else:
-            messages.info(request, 'Новые данные не добавлены. Возможно, они уже существуют.')
+@role_required(['A'])
+def load_classes_subjects(request):
+    if request.method == "POST":
+        if 'excel_file' not in request.FILES:
+            messages.error(request, '❌ Файл не был загружен.')
+            return redirect('school_structure')
+        
+        excel_file = request.FILES['excel_file']
+        
+        if not excel_file.name.endswith(('.xlsx', '.xls')):
+            messages.error(
+                request,
+                '❌ Неверный формат файла. Используйте .xlsx или .xls'
+            )
+            return redirect('school_structure')
+        
+        try:
+            file_content = excel_file.read()
+            
+            task = load_classes_subjects_task.delay(
+                file_content=file_content,
+                file_name=excel_file.name
+            )
+            
+            messages.info(
+                request,
+                f'📤 Файл "{excel_file.name}" отправлен на обработку. '
+                f'Задача ID: {task.id[:8]}... '
+                f'Обновите страницу через минуту для просмотра результатов.'
+            )
+            
+            request.session['last_structure_task'] = task.id
+            
+        except Exception as e:
+            messages.error(
+                request,
+                f'❌ Ошибка при запуске обработки: {str(e)}'
+            )
         
         return redirect('school_structure')
     
-    messages.success(request, '✅ Загрузка завершина, все ок.')
     return redirect('school_structure')
 
+
+@role_required(['A'])
 def school_structure(request):
     total_classes = Classes.objects.count()
     total_subjects = Subjects.objects.count()
     total_students = User.objects.filter(role='S').count()
-    classes = Classes.objects.prefetch_related('sub_id').order_by('number', 'letter')
+    
+    classes = Classes.objects.prefetch_related('sub_id').order_by(
+        'number', 'letter'
+    )
     
     classes_stats = []
     for class_obj in classes:
         subjects_list = [subj.name for subj in class_obj.sub_id.all()]
-        students_count = User.objects.filter(classes_id=class_obj, role='S').count()
+        students_count = User.objects.filter(
+            classes_id=class_obj,
+            role='S'
+        ).count()
         
         classes_stats.append({
-            'name': str(class_obj),                    # "9А"
-            'subjects_count': class_obj.sub_id.count(), # Количество предметов
-            'students_count': students_count,           # Количество учеников
-            'subjects': subjects_list                   # ['Математика 9А', 'Русский 9А', ...]
+            'name': str(class_obj),
+            'subjects_count': class_obj.sub_id.count(),
+            'students_count': students_count,
+            'subjects': subjects_list
         })
 
     context = {
