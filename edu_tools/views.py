@@ -9,7 +9,7 @@ from users.models import User
 from edu.models import Classes, Subjects
 from .forms import LessonsForm
 
-
+# вот тут добавить celery
 # для добавление учеников или учителей
 @role_required(['A'])
 def add_schoolers(request):
@@ -85,6 +85,7 @@ def add_schoolers(request):
         return redirect('school_structure')
     return redirect('school_structure')
 
+# вот тут добавить celery
 # Добавление уроков
 @role_required(['A', 'T'])
 def edu_program(request):
@@ -122,6 +123,7 @@ def class_change(request):
         messages.success(request, f'{len(selected_students)} изменений в структуре студентов')
     return render(request, 'tools/class_change.html', {'students': students, 'classes': classes})
 
+# вот тут добавить celery
 # автодобавлени классов и предмету
 @role_required(['A'])
 def load_classes_subjects(request):
